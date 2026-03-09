@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Baby Tracker">
+<meta name="theme-color" content="#fce4ec">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+<title>Baby Tracker 🍼</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Pastel palette from the icon */
+    --pink:       #f48fb1;
+    --pink-light: #fce4ec;
+    --pink-mid:   #f8bbd0;
+    --teal:       #4db6ac;
+    --teal-light: #e0f2f1;
+    --teal-mid:   #b2dfdb;
+    --yellow:     #ffd54f;
+    --yellow-light:#fff8e1;
+    --blue-light: #e3f2fd;
+    --blue-mid:   #bbdefb;
+    --navy:       #283593;
+    --navy-soft:  #3949ab;
+
+    --bg:         #fff5f8;
+    --surface:    #ffffff;
+    --surface2:   #fdf0f4;
+    --border:     #fce4ec;
+    --border2:    #f8bbd0;
+
+    --text:       #3a2a35;
+    --text2:      #9e7b8a;
+    --text3:      #c4a0b0;
+
+    --baby1:      #f48fb1;
+    --baby1-bg:   #fce4ec;
+    --baby2:      #4db6ac;
+    --baby2-bg:   #e0f2f1;
+
+    --radius:     20px;
+    --safe-top:   env(safe-area-inset-top, 0px);
+    --safe-bottom:env(safe-area-inset-bottom, 0px);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    padding-top: var(--safe-top);
+    padding-bottom: calc(var(--safe-bottom) + 82px);
+  }
+
+  /* Subtle background blobs */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse at 10% 0%, rgba(244,143,177,0.18) 0%, transparent 45%),
+      radial-gradient(ellipse at 90% 100%, rgba(77,182,172,0.14) 0%, transparent 45%),
+      radial-gradient(ellipse at 80% 10%, rgba(255,213,79,0.10) 0%, transparent 35%);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,245,248,0.94);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1.5px solid var(--pink-mid);
+    padding: 12px 16px 0;
+  }
+
+  .header-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 10px;
+    gap: 2px;
+  }
+
+  .header-title {
+    font-family: 'Baloo 2', cursive;
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #e91e8c, #f48fb1, #4db6ac);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+  }
+
+  .header-date {
+    font-size: 11.5px;
+    color: var(--text2);
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── BABY SWITCHER ── */
+  .baby-switcher {
+    display: flex; gap: 8px; padding-bottom: 12px;
+  }
+
+  .baby-tab {
+    flex: 1; padding: 9px 10px;
+    border-radius: 16px;
+    border: 2px solid var(--border2);
+    background: var(--surface);
+    cursor: pointer; transition: all .2s;
+    display: flex; align-items: center; gap: 8px;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(244,143,177,0.10);
+  }
+  .baby-tab:active { transform: scale(.96); }
+  .baby-tab.active-b1 { border-color: var(--baby1); background: var(--baby1-bg); box-shadow: 0 3px 12px rgba(244,143,177,0.25); }
+  .baby-tab.active-b2 { border-color: var(--baby2); background: var(--baby2-bg); box-shadow: 0 3px 12px rgba(77,182,172,0.20); }
+
+  .baby-tab-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .b1-avatar { background: rgba(244,143,177,0.25); }
+  .b2-avatar { background: rgba(77,182,172,0.22); }
+
+  .baby-tab-info { flex: 1; min-width: 0; }
+  .baby-tab-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .baby-tab-count { font-size: 10px; color: var(--text2); font-weight: 500; margin-top: 1px; }
+
+  .baby-tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .b1-dot { background: var(--baby1); }
+  .b2-dot { background: var(--baby2); }
+
+  .baby-tab-edit {
+    position: absolute; top: 4px; right: 6px;
+    font-size: 10px; color: var(--text3);
+    background: rgba(244,143,177,0.15);
+    border: none; border-radius: 6px; padding: 2px 5px;
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+  }
+  .baby-tab-edit:active { background: rgba(244,143,177,0.30); }
+
+  /* ── VIEWS ── */
+  .view { display: none; position: relative; z-index: 1; }
+  .view.active { display: block; }
+
+  .section-label {
+    font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--text2); font-weight: 700;
+    padding: 18px 18px 9px;
+  }
+
+  /* ── QUICK GRID ── */
+  .quick-grid {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 10px; padding: 0 14px;
+  }
+
+  .activity-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border2);
+    border-radius: 18px; padding: 14px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer; transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 2px 8px rgba(244,143,177,0.10);
+  }
+  .activity-btn:active { transform: scale(.93); box-shadow: none; }
+  .activity-btn .icon { font-size: 27px; line-height: 1; }
+  .activity-btn .label { font-size: 11px; font-weight: 700; color: var(--text); text-align: center; }
+  .activity-btn .last-time {
+    font-size: 9px; color: var(--text2); font-weight: 600;
+    background: var(--pink-light);
+    border-radius: 8px; padding: 2px 7px; text-align: center;
+  }
+
+  /* ── WIDGETS ── */
+  .widgets-grid { display: flex; flex-direction: column; gap: 9px; padding: 0 14px; }
+
+  .widget {
+    background: var(--surface);
+    border: 1.5px solid var(--border2);
+    border-radius: 18px; padding: 14px 14px 12px;
+    display: flex; align-items: center; gap: 12px;
+    position: relative; overflow: hidden;
+    box-shadow: 0 2px 10px rgba(244,143,177,0.09);
+    animation: slideIn .3s ease;
+  }
+  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  .widget::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: var(--widget-color, var(--pink)); border-radius: 2px 0 0 2px;
+  }
+
+  .widget-icon {
+    font-size: 28px; width: 46px; height: 46px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--pink-light); border-radius: 14px; flex-shrink: 0;
+  }
+  .widget-info { flex: 1; min-width: 0; }
+  .widget-type { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text2); font-weight: 700; margin-bottom: 2px; }
+  .widget-detail { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+  .widget-ago { font-family: 'Baloo 2', cursive; font-size: 13px; font-weight: 700; color: var(--widget-color, var(--pink)); white-space: nowrap; flex-shrink: 0; }
+  .widget-delete { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text3); padding: 4px; border-radius: 8px; }
+  .widget-delete:active { color: var(--pink); }
+  .widget-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--pink-light); }
+  .widget-progress-fill { height: 100%; background: var(--widget-color, var(--pink)); border-radius: 2px; opacity: 0.5; }
+
+  .timer-urgent { color: #e53935 !important; }
+  .timer-warn   { color: #fb8c00 !important; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { text-align: center; padding: 44px 28px; color: var(--text2); }
+  .empty-state .big-icon { font-size: 52px; margin-bottom: 12px; }
+  .empty-state h3 { font-family: 'Baloo 2', cursive; font-size: 19px; color: var(--text); margin-bottom: 7px; font-weight: 700; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* ── LOG LIST ── */
+  .log-list { padding: 0 14px; display: flex; flex-direction: column; gap: 6px; }
+  .log-date-label {
+    font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--text2); font-weight: 700; padding: 12px 0 5px;
+  }
+  .log-item {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 14px; padding: 11px 13px;
+    display: flex; align-items: center; gap: 11px;
+    box-shadow: 0 1px 5px rgba(244,143,177,0.07);
+  }
+  .log-item-icon { font-size: 21px; }
+  .log-item-info { flex: 1; }
+  .log-item-type { font-size: 13px; font-weight: 700; color: var(--text); }
+  .log-item-note { font-size: 11px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+  .log-item-time { font-size: 11.5px; color: var(--text2); font-weight: 600; white-space: nowrap; }
+  .log-item-del { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text3); padding: 4px; flex-shrink: 0; }
+  .log-item-del:active { color: var(--pink); }
+
+  /* ── FILTER CHIPS ── */
+  .filter-row {
+    display: flex; gap: 7px; overflow-x: auto;
+    padding: 0 14px 10px; scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    flex-shrink: 0; padding: 6px 13px;
+    border-radius: 20px; border: 1.5px solid var(--border2);
+    background: var(--surface);
+    font-size: 12px; font-weight: 700; color: var(--text2);
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .filter-chip.active-f {
+    border-color: var(--pink); color: var(--surface);
+    background: var(--pink);
+  }
+
+  /* ── MODALS ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(58,42,53,0.4);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1.5px solid var(--pink-mid);
+    border-radius: 28px 28px 0 0;
+    width: 100%; max-width: 480px;
+    padding: 20px 20px calc(20px + var(--safe-bottom));
+    animation: slideUp .3s cubic-bezier(.34,1.56,.64,1);
+    max-height: 90dvh; overflow-y: auto;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width: 38px; height: 4px; background: var(--pink-mid); border-radius: 2px; margin: 0 auto 18px; }
+  .modal-title { font-family: 'Baloo 2', cursive; font-size: 21px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 9px; color: var(--text); }
+  .modal label { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--text2); font-weight: 700; display: block; margin-bottom: 5px; margin-top: 13px; }
+  .modal input, .modal textarea {
+    width: 100%; background: var(--pink-light);
+    border: 1.5px solid var(--pink-mid); border-radius: 12px;
+    padding: 10px 13px; color: var(--text);
+    font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 500;
+    outline: none; -webkit-appearance: none;
+  }
+  .modal textarea { resize: none; height: 64px; }
+  .modal input:focus, .modal textarea:focus { border-color: var(--pink); }
+
+  .opt-row { display: flex; gap: 7px; margin-top: 4px; }
+  .opt-btn {
+    flex: 1; padding: 9px 5px; border: 1.5px solid var(--pink-mid);
+    background: var(--pink-light); border-radius: 12px;
+    text-align: center; font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all .15s;
+    font-family: 'Nunito', sans-serif; font-weight: 600;
+  }
+  .opt-btn.selected { border-color: var(--pink); color: var(--surface); background: var(--pink); }
+  .opt-btn.sel-teal.selected { border-color: var(--teal); color: var(--surface); background: var(--teal); }
+
+  .btn-primary {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #e91e8c, #f48fb1);
+    border: none; border-radius: 16px; color: white;
+    font-family: 'Baloo 2', cursive; font-size: 16px; font-weight: 700;
+    cursor: pointer; margin-top: 16px; transition: transform .15s, opacity .15s;
+    box-shadow: 0 4px 14px rgba(244,143,177,0.40);
+  }
+  .btn-primary:active { transform: scale(.97); opacity: .9; }
+  .btn-secondary {
+    width: 100%; padding: 12px; background: transparent;
+    border: 1.5px solid var(--border2); border-radius: 14px;
+    color: var(--text2); font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 7px;
+  }
+  .btn-secondary:active { background: var(--pink-light); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255,245,248,0.95);
+    backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-top: 1.5px solid var(--pink-mid);
+    display: flex; padding-bottom: var(--safe-bottom);
+  }
+  .nav-btn {
+    flex: 1; padding: 10px 8px 8px; background: none; border: none;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; color: var(--text3); transition: color .2s;
+  }
+  .nav-btn.active { color: var(--pink); }
+  .nav-btn .nav-icon { font-size: 21px; }
+  .nav-btn .nav-label { font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+
+  /* ── SETTINGS ── */
+  .settings-section { padding: 0 14px; }
+  .settings-card {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 18px; overflow: hidden; margin-bottom: 11px;
+    box-shadow: 0 2px 8px rgba(244,143,177,0.08);
+  }
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 15px; border-bottom: 1px solid var(--pink-light);
+    cursor: pointer;
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-label { font-size: 14px; font-weight: 600; color: var(--text); }
+  .settings-row-value { font-size: 13px; color: var(--text2); }
+
+  .baby-profile-card {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 18px; padding: 14px 15px; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 8px rgba(244,143,177,0.08);
+  }
+  .baby-profile-avatar {
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; flex-shrink: 0;
+  }
+  .baby-profile-info { flex: 1; }
+  .baby-profile-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .baby-profile-sub { font-size: 12px; color: var(--text2); margin-top: 2px; font-weight: 500; }
+  .baby-profile-edit-btn {
+    background: var(--pink-light); border: 1.5px solid var(--pink-mid);
+    border-radius: 10px; padding: 6px 13px; color: var(--pink);
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: 'Nunito', sans-serif; white-space: nowrap;
+  }
+
+  .export-section { padding: 0 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 11px; }
+  .export-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 14px; padding: 13px; font-size: 14px; font-weight: 700;
+    cursor: pointer; font-family: 'Nunito', sans-serif; color: var(--pink);
+    box-shadow: 0 2px 8px rgba(244,143,177,0.08);
+  }
+  .export-btn:active { opacity: .8; }
+  .export-btn.b2 { color: var(--teal); }
+  .export-btn.both { color: var(--navy-soft); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 94px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #fff;
+    border-radius: 14px; padding: 10px 18px;
+    font-size: 13px; font-weight: 700;
+    opacity: 0; transition: all .3s; z-index: 300; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── INSTALL BANNER ── */
+  .install-banner {
+    margin: 10px 14px 0;
+    background: linear-gradient(135deg, rgba(244,143,177,.12), rgba(77,182,172,.08));
+    border: 1.5px solid var(--pink-mid); border-radius: 14px;
+    padding: 11px 14px; font-size: 12px; color: var(--text2);
+    line-height: 1.6; display: none; font-weight: 500;
+  }
+  .install-banner.visible { display: block; }
+  .install-banner strong { color: var(--pink); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-center">
+    <div class="header-title">🍼 Baby Tracker</div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <div class="baby-switcher">
+    <div class="baby-tab active-b1" id="tab-baby1" onclick="switchBaby(1)">
+      <div class="baby-tab-avatar b1-avatar">🩷</div>
+      <div class="baby-tab-info">
+        <div class="baby-tab-name" id="tab-name-1">Baby 1</div>
+        <div class="baby-tab-count" id="tab-count-1">0 today</div>
+      </div>
+      <div class="baby-tab-dot b1-dot"></div>
+      <button class="baby-tab-edit" onclick="openEditName(1,event)">✏️</button>
+    </div>
+    <div class="baby-tab" id="tab-baby2" onclick="switchBaby(2)">
+      <div class="baby-tab-avatar b2-avatar">🩵</div>
+      <div class="baby-tab-info">
+        <div class="baby-tab-name" id="tab-name-2">Baby 2</div>
+        <div class="baby-tab-count" id="tab-count-2">0 today</div>
+      </div>
+      <div class="baby-tab-dot b2-dot"></div>
+      <button class="baby-tab-edit" onclick="openEditName(2,event)">✏️</button>
+    </div>
+  </div>
+</div>
+
+<div class="install-banner" id="installBanner">
+  📲 <strong>Install as App:</strong> Tap Share in Safari → "Add to Home Screen"
+</div>
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-dashboard">
+  <div class="section-label">Quick Log</div>
+  <div class="quick-grid">
+    <button class="activity-btn" onclick="openModal('feeding')">
+      <div class="icon">🍼</div><div class="label">Feeding</div>
+      <div class="last-time" id="last-feeding">Never</div>
+    </button>
+    <button class="activity-btn" onclick="openModal('diaper')">
+      <div class="icon">🚼</div><div class="label">Diaper</div>
+      <div class="last-time" id="last-diaper">Never</div>
+    </button>
+    <button class="activity-btn" onclick="openModal('sleep')">
+      <div class="icon">😴</div><div class="label">Sleep</div>
+      <div class="last-time" id="last-sleep">Never</div>
+    </button>
+    <button class="activity-btn" onclick="openModal('bath')">
+      <div class="icon">🛁</div><div class="label">Bath</div>
+      <div class="last-time" id="last-bath">Never</div>
+    </button>
+    <button class="activity-btn" onclick="openModal('medicine')">
+      <div class="icon">💊</div><div class="label">Medicine</div>
+      <div class="last-time" id="last-medicine">Never</div>
+    </button>
+    <button class="activity-btn" onclick="openModal('custom')">
+      <div class="icon">✏️</div><div class="label">Custom</div>
+      <div class="last-time" id="last-custom">—</div>
+    </button>
+  </div>
+  <div class="section-label" id="recentLabel">Recent Activity</div>
+  <div class="widgets-grid" id="widgetsGrid"></div>
+</div>
+
+<!-- LOGS -->
+<div class="view" id="view-logs">
+  <div class="section-label" id="logViewTitle">Log History</div>
+  <div class="filter-row" id="filterRow">
+    <div class="filter-chip active-f" data-filter="all" onclick="setFilter('all')">All</div>
+    <div class="filter-chip" data-filter="feeding" onclick="setFilter('feeding')">🍼 Feeding</div>
+    <div class="filter-chip" data-filter="diaper" onclick="setFilter('diaper')">🚼 Diaper</div>
+    <div class="filter-chip" data-filter="sleep" onclick="setFilter('sleep')">😴 Sleep</div>
+    <div class="filter-chip" data-filter="bath" onclick="setFilter('bath')">🛁 Bath</div>
+    <div class="filter-chip" data-filter="medicine" onclick="setFilter('medicine')">💊 Medicine</div>
+    <div class="filter-chip" data-filter="custom" onclick="setFilter('custom')">✏️ Custom</div>
+  </div>
+  <div class="log-list" id="logList"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="view" id="view-settings">
+  <div class="section-label">Baby Profiles</div>
+  <div class="settings-section">
+    <div class="baby-profile-card">
+      <div class="baby-profile-avatar b1-avatar">🩷</div>
+      <div class="baby-profile-info">
+        <div class="baby-profile-name" id="profile-name-1">Baby 1</div>
+        <div class="baby-profile-sub" id="profile-sub-1">0 total logs</div>
+      </div>
+      <button class="baby-profile-edit-btn" onclick="openEditName(1,event)">✏️ Edit</button>
+    </div>
+    <div class="baby-profile-card">
+      <div class="baby-profile-avatar b2-avatar">🩵</div>
+      <div class="baby-profile-info">
+        <div class="baby-profile-name" id="profile-name-2">Baby 2</div>
+        <div class="baby-profile-sub" id="profile-sub-2">0 total logs</div>
+      </div>
+      <button class="baby-profile-edit-btn" onclick="openEditName(2,event)">✏️ Edit</button>
+    </div>
+  </div>
+
+  <div class="section-label">Export Data</div>
+  <div class="export-section">
+    <button class="export-btn" onclick="exportCSV(1)">📤 Export <span id="exp-name-1">Baby 1</span>'s Logs (CSV)</button>
+    <button class="export-btn b2" onclick="exportCSV(2)">📤 Export <span id="exp-name-2">Baby 2</span>'s Logs (CSV)</button>
+    <button class="export-btn both" onclick="exportBothCSV()">📦 Export Both Babies Together</button>
+  </div>
+
+  <div class="section-label">Manage Data</div>
+  <div class="settings-section">
+    <div class="settings-card">
+      <div class="settings-row" onclick="clearBabyData(1)">
+        <span class="settings-row-label" style="color:#e53935">Clear <span id="clear-name-1">Baby 1</span>'s logs</span>
+        <span class="settings-row-value">🗑️</span>
+      </div>
+      <div class="settings-row" onclick="clearBabyData(2)">
+        <span class="settings-row-label" style="color:#e53935">Clear <span id="clear-name-2">Baby 2</span>'s logs</span>
+        <span class="settings-row-value">🗑️</span>
+      </div>
+      <div class="settings-row" onclick="clearAllData()">
+        <span class="settings-row-label" style="color:#e53935">Clear ALL data (both babies)</span>
+        <span class="settings-row-value">⚠️</span>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;padding:22px 20px 10px;font-size:12px;color:var(--text2);font-weight:500;line-height:1.7;">
+    All data stored on your device only.<br>No servers · No accounts · Completely free 🩷
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="showView('dashboard')">
+    <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+  </button>
+  <button class="nav-btn" id="nav-logs" onclick="showView('logs')">
+    <span class="nav-icon">📋</span><span class="nav-label">Logs</span>
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="showView('settings')">
+    <span class="nav-icon">⚙️</span><span class="nav-label">Settings</span>
+  </button>
+</nav>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-overlay" id="modal-feeding" onclick="closeModalIfOverlay(event,'modal-feeding')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-feeding-title">🍼 Log Feeding</div>
+    <label>Type</label>
+    <div class="opt-row">
+      <button class="opt-btn sel-teal selected" data-group="feedtype" data-val="Breast milk" onclick="selectOpt(this,'feedtype')">Breast 🤱</button>
+      <button class="opt-btn sel-teal" data-group="feedtype" data-val="Formula" onclick="selectOpt(this,'feedtype')">Formula 🥛</button>
+      <button class="opt-btn sel-teal" data-group="feedtype" data-val="Solid food" onclick="selectOpt(this,'feedtype')">Solid 🥣</button>
+    </div>
+    <label>Side (breastfeeding)</label>
+    <div class="opt-row">
+      <button class="opt-btn selected" data-group="side" data-val="Left" onclick="selectOpt(this,'side')">Left</button>
+      <button class="opt-btn" data-group="side" data-val="Right" onclick="selectOpt(this,'side')">Right</button>
+      <button class="opt-btn" data-group="side" data-val="Both" onclick="selectOpt(this,'side')">Both</button>
+    </div>
+    <label>Duration / Amount</label>
+    <input type="text" id="feeding-amount" placeholder="e.g. 10 min or 120ml">
+    <label>Note (optional)</label>
+    <textarea id="feeding-note" placeholder="Any observations..."></textarea>
+    <label>Time</label>
+    <input type="datetime-local" id="feeding-time">
+    <button class="btn-primary" onclick="saveActivity('feeding')">Log Feeding ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-feeding')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-diaper" onclick="closeModalIfOverlay(event,'modal-diaper')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-diaper-title">🚼 Log Diaper</div>
+    <label>Type</label>
+    <div class="opt-row">
+      <button class="opt-btn selected" data-group="diaper" data-val="Wet" onclick="selectOpt(this,'diaper')">💧 Wet</button>
+      <button class="opt-btn" data-group="diaper" data-val="Soiled" onclick="selectOpt(this,'diaper')">💩 Soiled</button>
+      <button class="opt-btn" data-group="diaper" data-val="Both" onclick="selectOpt(this,'diaper')">💧💩 Both</button>
+    </div>
+    <label>Note (optional)</label>
+    <textarea id="diaper-note" placeholder="Color, consistency..."></textarea>
+    <label>Time</label>
+    <input type="datetime-local" id="diaper-time">
+    <button class="btn-primary" onclick="saveActivity('diaper')">Log Diaper ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-diaper')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-sleep" onclick="closeModalIfOverlay(event,'modal-sleep')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-sleep-title">😴 Log Sleep</div>
+    <label>Start Time</label>
+    <input type="datetime-local" id="sleep-start">
+    <label>End Time (leave blank if ongoing)</label>
+    <input type="datetime-local" id="sleep-end">
+    <label>Note (optional)</label>
+    <textarea id="sleep-note" placeholder="Nap or night sleep?"></textarea>
+    <button class="btn-primary" onclick="saveActivity('sleep')">Log Sleep ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-sleep')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-bath" onclick="closeModalIfOverlay(event,'modal-bath')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-bath-title">🛁 Log Bath</div>
+    <label>Duration</label>
+    <input type="text" id="bath-duration" placeholder="e.g. 10 minutes">
+    <label>Note (optional)</label>
+    <textarea id="bath-note" placeholder="Any notes..."></textarea>
+    <label>Time</label>
+    <input type="datetime-local" id="bath-time">
+    <button class="btn-primary" onclick="saveActivity('bath')">Log Bath ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-bath')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-medicine" onclick="closeModalIfOverlay(event,'modal-medicine')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-medicine-title">💊 Log Medicine</div>
+    <label>Medicine Name</label>
+    <input type="text" id="medicine-name" placeholder="e.g. Vitamin D drops">
+    <label>Dose</label>
+    <input type="text" id="medicine-dose" placeholder="e.g. 0.5ml">
+    <label>Note (optional)</label>
+    <textarea id="medicine-note" placeholder="Any observations..."></textarea>
+    <label>Time</label>
+    <input type="datetime-local" id="medicine-time">
+    <button class="btn-primary" onclick="saveActivity('medicine')">Log Medicine ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-medicine')">Cancel</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-custom" onclick="closeModalIfOverlay(event,'modal-custom')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-custom-title">✏️ Custom Activity</div>
+    <label>Activity Name</label>
+    <input type="text" id="custom-name" placeholder="e.g. Tummy time, Vaccine...">
+    <label>Details</label>
+    <textarea id="custom-note" placeholder="Any details..."></textarea>
+    <label>Time</label>
+    <input type="datetime-local" id="custom-time">
+    <button class="btn-primary" onclick="saveActivity('custom')">Log Activity ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-custom')">Cancel</button>
+  </div>
+</div>
+
+<!-- EDIT NAME MODAL -->
+<div class="modal-overlay" id="modal-editname" onclick="closeModalIfOverlay(event,'modal-editname')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="editNameTitle">✏️ Edit Name</div>
+    <label id="editNameLabel">Name</label>
+    <input type="text" id="editNameInput" placeholder="Enter baby's name..." maxlength="20">
+    <button class="btn-primary" onclick="saveEditName()">Save Name ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-editname')">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'babyTracker_v3';
+function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||mkDefault();}catch{return mkDefault();}}
+function mkDefault(){return{babies:[{id:1,name:'Baby 1',dob:''},{id:2,name:'Baby 2',dob:''}],logs:[]};}
+function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(appData));}
+
+let appData=loadData();
+let activeBaby=1;
+let activeFilter='all';
+let editingBabyId=null;
+
+const ACT={
+  feeding:{label:'Feeding',  icon:'🍼', color:'#f48fb1'},
+  diaper: {label:'Diaper',   icon:'🚼', color:'#4db6ac'},
+  sleep:  {label:'Sleep',    icon:'😴', color:'#9575cd'},
+  bath:   {label:'Bath',     icon:'🛁', color:'#64b5f6'},
+  medicine:{label:'Medicine',icon:'💊', color:'#e57373'},
+  custom: {label:'Activity', icon:'✏️', color:'#ffd54f'},
+};
+
+function getBaby(id){return appData.babies.find(b=>b.id===id);}
+function getLogsFor(id){return appData.logs.filter(l=>l.babyId===id);}
+
+function formatAgo(ts){
+  const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(d/3600000),dy=Math.floor(d/86400000);
+  if(m<1)return'Just now';if(m<60)return m+'m ago';if(h<24)return h+'h '+(m%60)+'m ago';return dy+'d ago';
+}
+function formatTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function formatDate(ts){
+  const d=new Date(ts),t=new Date(),y=new Date(t);y.setDate(y.getDate()-1);
+  if(d.toDateString()===t.toDateString())return'Today';
+  if(d.toDateString()===y.toDateString())return'Yesterday';
+  return d.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'});
+}
+function nowLocalISO(){const n=new Date();return new Date(n-n.getTimezoneOffset()*60000).toISOString().slice(0,16);}
+function agoClass(ms){const h=ms/3600000;if(h>=3)return'timer-urgent';if(h>=2)return'timer-warn';return'';}
+function todayCount(id){const t=new Date();t.setHours(0,0,0,0);return getLogsFor(id).filter(l=>l.timestamp>=t.getTime()).length;}
+
+function switchBaby(id){activeBaby=id;activeFilter='all';updateSwitcherUI();renderDashboard();renderLogs();}
+
+function updateSwitcherUI(){
+  [1,2].forEach(id=>{
+    const b=getBaby(id);
+    document.getElementById('tab-name-'+id).textContent=b.name;
+    document.getElementById('tab-count-'+id).textContent=todayCount(id)+' today';
+  });
+  document.getElementById('tab-baby1').className='baby-tab'+(activeBaby===1?' active-b1':'');
+  document.getElementById('tab-baby2').className='baby-tab'+(activeBaby===2?' active-b2':'');
+}
+
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='logs'){activeFilter='all';document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active-f',c.dataset.filter==='all'));renderLogs();}
+  if(name==='settings')renderSettings();
+}
+
+function renderDashboard(){
+  const baby=getBaby(activeBaby);
+  document.getElementById('headerDate').textContent=new Date().toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});
+  document.getElementById('recentLabel').textContent='Recent — '+baby.name;
+  const titles={feeding:'🍼',diaper:'🚼',sleep:'😴',bath:'🛁',medicine:'💊',custom:'✏️'};
+  Object.entries(titles).forEach(([t,e])=>{const el=document.getElementById('modal-'+t+'-title');if(el)el.textContent=e+' Log for '+baby.name;});
+  ['feeding','diaper','sleep','bath','medicine','custom'].forEach(type=>{
+    const last=getLogsFor(activeBaby).find(e=>e.type===type);
+    const el=document.getElementById('last-'+type);
+    if(el)el.textContent=last?formatAgo(last.timestamp):(type==='custom'?'—':'Never');
+  });
+  const grid=document.getElementById('widgetsGrid');
+  const recent=getLogsFor(activeBaby).slice(0,8);
+  if(!recent.length){
+    grid.innerHTML=`<div class="empty-state"><div class="big-icon">🌸</div><h3>All quiet!</h3><p>Log ${baby.name}'s first activity above.</p></div>`;
+    return;
+  }
+  grid.innerHTML=recent.map(entry=>{
+    const cfg=ACT[entry.type]||ACT.custom;
+    const diff=Date.now()-entry.timestamp;
+    const pct=Math.min(100,(diff/(4*3600000))*100);
+    return`<div class="widget" style="--widget-color:${cfg.color}">
+      <div class="widget-icon">${cfg.icon}</div>
+      <div class="widget-info">
+        <div class="widget-type">${cfg.label}</div>
+        <div class="widget-detail">${entry.detail||'—'}</div>
+      </div>
+      <div class="widget-ago ${agoClass(diff)}">${formatAgo(entry.timestamp)}</div>
+      <button class="widget-delete" onclick="deleteEntry('${entry.id}')">✕</button>
+      <div class="widget-progress"><div class="widget-progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function setFilter(f){
+  activeFilter=f;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active-f',c.dataset.filter===f));
+  renderLogs();
+}
+
+function renderLogs(){
+  const baby=getBaby(activeBaby);
+  document.getElementById('logViewTitle').textContent=baby.name+"'s Log History";
+  let logs=getLogsFor(activeBaby);
+  if(activeFilter!=='all')logs=logs.filter(l=>l.type===activeFilter);
+  const list=document.getElementById('logList');
+  if(!logs.length){
+    list.innerHTML=`<div class="empty-state"><div class="big-icon">📋</div><h3>No logs yet</h3><p>${activeFilter==='all'?'Start logging '+baby.name+"'s activities.":'No '+activeFilter+' logs for '+baby.name+'.'}</p></div>`;
+    return;
+  }
+  const groups={};
+  logs.forEach(e=>{const k=formatDate(e.timestamp);if(!groups[k])groups[k]=[];groups[k].push(e);});
+  list.innerHTML=Object.entries(groups).map(([date,entries])=>`
+    <div><div class="log-date-label">${date}</div>
+    ${entries.map(e=>{const cfg=ACT[e.type]||ACT.custom;return`<div class="log-item">
+      <div class="log-item-icon">${cfg.icon}</div>
+      <div class="log-item-info">
+        <div class="log-item-type">${cfg.label}</div>
+        ${e.detail?`<div class="log-item-note">${e.detail}</div>`:''}
+      </div>
+      <div class="log-item-time">${formatTime(e.timestamp)}</div>
+      <button class="log-item-del" onclick="deleteEntry('${e.id}')">🗑️</button>
+    </div>`;}).join('')}</div>`).join('');
+}
+
+function deleteEntry(id){
+  appData.logs=appData.logs.filter(e=>String(e.id)!==String(id));
+  saveData();renderDashboard();renderLogs();updateSwitcherUI();
+}
+
+function openModal(type){
+  const now=nowLocalISO();
+  const map={feeding:'feeding-time',diaper:'diaper-time',bath:'bath-time',medicine:'medicine-time',custom:'custom-time',sleep:'sleep-start'};
+  if(map[type]){const el=document.getElementById(map[type]);if(el)el.value=now;}
+  if(type==='sleep'){const e=document.getElementById('sleep-end');if(e)e.value='';}
+  document.getElementById('modal-'+type).classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModalIfOverlay(e,id){if(e.target===document.getElementById(id))closeModal(id);}
+function selectOpt(el,group){
+  el.closest('.modal').querySelectorAll('[data-group="'+group+'"]').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function saveActivity(type){
+  let detail='',timestamp=Date.now();
+  if(type==='feeding'){
+    const ft=document.querySelector('[data-group="feedtype"].selected')?.dataset.val||'Breast milk';
+    const sd=document.querySelector('[data-group="side"].selected')?.dataset.val||'';
+    const am=document.getElementById('feeding-amount').value;
+    const no=document.getElementById('feeding-note').value;
+    const tv=document.getElementById('feeding-time').value;
+    if(tv)timestamp=new Date(tv).getTime();
+    detail=[ft,ft==='Breast milk'&&sd?sd:'',am,no].filter(Boolean).join(' · ');
+    document.getElementById('feeding-amount').value='';document.getElementById('feeding-note').value='';
+  }else if(type==='diaper'){
+    const dt=document.querySelector('[data-group="diaper"].selected')?.dataset.val||'Wet';
+    const no=document.getElementById('diaper-note').value;
+    const tv=document.getElementById('diaper-time').value;
+    if(tv)timestamp=new Date(tv).getTime();
+    detail=[dt,no].filter(Boolean).join(' · ');document.getElementById('diaper-note').value='';
+  }else if(type==='sleep'){
+    const s=document.getElementById('sleep-start').value;
+    const e=document.getElementById('sleep-end').value;
+    const no=document.getElementById('sleep-note').value;
+    if(s)timestamp=new Date(s).getTime();
+    if(e){const dur=Math.round((new Date(e)-new Date(s))/60000);detail=dur+'min'+(no?' · '+no:'');}
+    else detail='Ongoing'+(no?' · '+no:'');
+    document.getElementById('sleep-note').value='';
+  }else if(type==='bath'){
+    const dur=document.getElementById('bath-duration').value;
+    const no=document.getElementById('bath-note').value;
+    const tv=document.getElementById('bath-time').value;
+    if(tv)timestamp=new Date(tv).getTime();
+    detail=[dur,no].filter(Boolean).join(' · ');
+    document.getElementById('bath-duration').value='';document.getElementById('bath-note').value='';
+  }else if(type==='medicine'){
+    const nm=document.getElementById('medicine-name').value;
+    const ds=document.getElementById('medicine-dose').value;
+    const no=document.getElementById('medicine-note').value;
+    const tv=document.getElementById('medicine-time').value;
+    if(tv)timestamp=new Date(tv).getTime();
+    detail=[nm,ds,no].filter(Boolean).join(' · ');
+    document.getElementById('medicine-name').value='';document.getElementById('medicine-dose').value='';document.getElementById('medicine-note').value='';
+  }else if(type==='custom'){
+    const nm=document.getElementById('custom-name').value||'Activity';
+    const no=document.getElementById('custom-note').value;
+    const tv=document.getElementById('custom-time').value;
+    if(tv)timestamp=new Date(tv).getTime();
+    detail=[nm,no].filter(Boolean).join(' · ');
+    document.getElementById('custom-name').value='';document.getElementById('custom-note').value='';
+  }
+  appData.logs.unshift({id:Date.now()+Math.random(),babyId:activeBaby,type,detail,timestamp});
+  saveData();closeModal('modal-'+type);renderDashboard();updateSwitcherUI();
+  showToast(ACT[type].icon+' '+ACT[type].label+' logged for '+getBaby(activeBaby).name+'!');
+}
+
+function openEditName(id,event){
+  if(event)event.stopPropagation();
+  editingBabyId=id;
+  const baby=getBaby(id);
+  document.getElementById('editNameTitle').textContent=(id===1?'🩷':'🩵')+' Edit Baby '+id+' Name';
+  document.getElementById('editNameLabel').textContent="Baby "+id+"'s Name";
+  document.getElementById('editNameInput').value=baby.name;
+  document.getElementById('modal-editname').classList.add('open');
+  setTimeout(()=>document.getElementById('editNameInput').focus(),350);
+}
+function saveEditName(){
+  const val=document.getElementById('editNameInput').value.trim();
+  if(!val){showToast('Please enter a name');return;}
+  getBaby(editingBabyId).name=val;
+  saveData();closeModal('modal-editname');
+  updateSwitcherUI();renderDashboard();renderSettings();
+  showToast('✅ Name saved!');
+}
+
+function renderSettings(){
+  [1,2].forEach(id=>{
+    const baby=getBaby(id);
+    const total=getLogsFor(id).length;
+    document.getElementById('profile-name-'+id).textContent=baby.name;
+    document.getElementById('profile-sub-'+id).textContent=total+' total log'+(total!==1?'s':'');
+    const en=document.getElementById('exp-name-'+id);if(en)en.textContent=baby.name;
+    const cn=document.getElementById('clear-name-'+id);if(cn)cn.textContent=baby.name;
+  });
+}
+
+function exportCSV(babyId){
+  const baby=getBaby(babyId);
+  const rows=[...getLogsFor(babyId)].sort((a,b)=>a.timestamp-b.timestamp).map(e=>{
+    const d=new Date(e.timestamp);
+    return[d.toLocaleDateString(),d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),ACT[e.type]?.label||e.type,(e.detail||'').replace(/,/g,';')];
+  });
+  const csv=[['Date','Time','Activity','Details'],...rows].map(r=>r.join(',')).join('\n');
+  dl(`${baby.name.replace(/\s+/g,'-')}-logs-${new Date().toISOString().slice(0,10)}.csv`,csv,'text/csv');
+  showToast('📤 '+baby.name+' CSV exported!');
+}
+function exportBothCSV(){
+  const rows=[...appData.logs].sort((a,b)=>a.timestamp-b.timestamp).map(e=>{
+    const d=new Date(e.timestamp),baby=getBaby(e.babyId);
+    return[baby?.name||'Baby',d.toLocaleDateString(),d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),ACT[e.type]?.label||e.type,(e.detail||'').replace(/,/g,';')];
+  });
+  const csv=[['Baby','Date','Time','Activity','Details'],...rows].map(r=>r.join(',')).join('\n');
+  dl(`both-babies-logs-${new Date().toISOString().slice(0,10)}.csv`,csv,'text/csv');
+  showToast('📦 Both babies exported!');
+}
+function dl(name,content,type){
+  const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);
+}
+function clearBabyData(id){
+  const baby=getBaby(id);
+  if(!confirm('Delete all logs for '+baby.name+'? Cannot be undone.'))return;
+  appData.logs=appData.logs.filter(l=>l.babyId!==id);
+  saveData();renderDashboard();renderLogs();renderSettings();updateSwitcherUI();
+  showToast('🗑️ '+baby.name+"'s logs cleared");
+}
+function clearAllData(){
+  if(!confirm('Delete ALL logs for BOTH babies? Cannot be undone!'))return;
+  appData.logs=[];saveData();renderDashboard();renderLogs();renderSettings();updateSwitcherUI();
+  showToast('🗑️ All data cleared');
+}
+
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+}
+
+window.addEventListener('DOMContentLoaded',()=>{
+  updateSwitcherUI();renderDashboard();renderSettings();
+  setInterval(()=>{renderDashboard();updateSwitcherUI();},60000);
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(isIOS&&!window.navigator.standalone)document.getElementById('installBanner').classList.add('visible');
+  document.getElementById('editNameInput').addEventListener('keydown',e=>{if(e.key==='Enter')saveEditName();});
+});
+</script>
+</body>
+</html>
