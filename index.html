@@ -176,6 +176,19 @@
     padding: 18px 18px 9px;
   }
 
+  .section-label-with-toggle {
+    display: flex; align-items: center; gap: 6px;
+    justify-content: flex-start;
+    padding-right: 14px;
+  }
+
+  .section-toggle-icon {
+    border: none; background: transparent;
+    font-size: 14px; color: var(--text2);
+    cursor: pointer; padding: 4px 4px;
+  }
+  .section-toggle-icon:active { color: var(--pink); }
+
   /* ── QUICK GRID ── */
   .quick-grid {
     display: grid; grid-template-columns: repeat(6,1fr);
@@ -392,6 +405,34 @@
   .nav-btn .nav-icon { font-size: 21px; }
   .nav-btn .nav-label { font-size: 10px; font-weight: 700; letter-spacing: .04em; }
 
+  /* ── STATS ── */
+  .stats-wrapper { padding: 0 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .stats-summary {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 18px; padding: 14px 14px 12px;
+    box-shadow: 0 2px 8px rgba(244,143,177,0.08);
+    font-size: 13px; color: var(--text2);
+  }
+  .stats-grid {
+    display: grid; grid-template-columns: repeat(2,1fr); gap: 8px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1.5px solid var(--border2);
+    border-radius: 16px; padding: 10px 11px;
+    display: flex; flex-direction: column; gap: 4px;
+    font-size: 12px; box-shadow: 0 2px 6px rgba(244,143,177,0.06);
+  }
+  .stat-label {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text2); font-weight: 700;
+  }
+  .stat-value {
+    font-family: 'Baloo 2', cursive; font-size: 18px; font-weight: 700; color: var(--pink);
+  }
+  .stat-sub {
+    font-size: 11px; color: var(--text2);
+  }
+
   /* ── SETTINGS ── */
   .settings-section { padding: 0 14px; }
   .settings-card {
@@ -499,7 +540,11 @@
 
 <!-- DASHBOARD -->
 <div class="view active" id="view-dashboard">
-  <div class="section-label">Quick Log</div>
+  <div class="section-label section-label-with-toggle">
+    <span>Quick Log</span>
+    <button class="section-toggle-icon" id="quickGridToggle" onclick="toggleQuickGrid()">▾</button>
+  </div>
+  <div id="quickGridSection">
   <div class="quick-grid">
     <button class="activity-btn" onclick="openModal('feeding')">
       <div class="icon">🍼</div><div class="label">Feeding</div>
@@ -526,8 +571,12 @@
       <div class="last-time" id="last-custom">—</div>
     </button>
   </div>
+  </div><!-- /#quickGridSection -->
   <div class="quick-shortcuts-header">
-    <div class="quick-shortcuts-title">My Shortcuts</div>
+    <div class="quick-shortcuts-title">
+      My Shortcuts
+      <button class="section-toggle-icon" id="shortcutsToggle" onclick="toggleShortcuts()">▾</button>
+    </div>
     <button class="quick-shortcuts-add" onclick="openQuickPresetModal()">＋ Add</button>
   </div>
   <div class="quick-grid quick-grid-shortcuts" id="quickGrid-shortcuts"></div>
@@ -606,6 +655,14 @@
     All data stored on your device only.<br>No servers · No accounts · Completely free 🩷
   </div>
   </div>
+
+<!-- STATS -->
+<div class="view" id="view-stats">
+  <div class="section-label" id="statsTitle">Stats</div>
+  <div class="stats-wrapper" id="statsWrapper">
+    <!-- Filled by renderStats() -->
+  </div>
+</div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -615,6 +672,9 @@
   </button>
   <button class="nav-btn" id="nav-logs" onclick="showView('logs')">
     <span class="nav-icon">📋</span><span class="nav-label">Logs</span>
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="showView('stats')">
+    <span class="nav-icon">📊</span><span class="nav-label">Stats</span>
   </button>
   <button class="nav-btn" id="nav-settings" onclick="showView('settings')">
     <span class="nav-icon">⚙️</span><span class="nav-label">Settings</span>
@@ -794,6 +854,8 @@ let appData=loadData();
 let activeBaby=1;
 let activeFilter='all';
 let editingBabyId=null;
+let quickGridCollapsed=false;
+let shortcutsCollapsed=false;
 
 const ACT={
   feeding:{label:'Feeding',  icon:'🍼', color:'#f48fb1'},
@@ -807,6 +869,15 @@ const ACT={
 function getBaby(id){return appData.babies.find(b=>b.id===id);}
 function getLogsFor(id){return appData.logs.filter(l=>l.babyId===id);}
 function getQuickPresets(){return appData.quickPresets||[];}
+
+function getWeekLogs(id){
+  const now=new Date();
+  const start=new Date();
+  start.setHours(0,0,0,0);
+  start.setDate(start.getDate()-6); // last 7 days including today
+  const fromTs=start.getTime();
+  return getLogsFor(id).filter(l=>l.timestamp>=fromTs && l.timestamp<=now.getTime());
+}
 
 function formatAgo(ts){
   const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(d/3600000),dy=Math.floor(d/86400000);
@@ -830,6 +901,10 @@ function switchBaby(id){
   updateSwitcherUI();
   renderDashboard();
   renderLogs();
+  const statsView=document.getElementById('view-stats');
+  if(statsView && statsView.classList.contains('active')){
+    renderStats();
+  }
 }
 
 function updateThemeForActiveBaby(){
@@ -856,6 +931,7 @@ function showView(name){
   document.getElementById('nav-'+name).classList.add('active');
   if(name==='logs'){activeFilter='all';document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active-f',c.dataset.filter==='all'));renderLogs();}
   if(name==='settings')renderSettings();
+  if(name==='stats')renderStats();
 }
 
 function renderDashboard(){
@@ -870,6 +946,14 @@ function renderDashboard(){
     if(el)el.textContent=last?formatAgo(last.timestamp):(type==='custom'?'—':'Never');
   });
   renderQuickPresets();
+  const quickGridWrap=document.getElementById('quickGridSection');
+  const quickGridToggle=document.getElementById('quickGridToggle');
+  if(quickGridWrap){
+    quickGridWrap.style.display=quickGridCollapsed?'none':'block';
+  }
+  if(quickGridToggle){
+    quickGridToggle.textContent=quickGridCollapsed?'▸':'▾';
+  }
   const grid=document.getElementById('widgetsGrid');
   const recent=getLogsFor(activeBaby).slice(0,8);
   if(!recent.length){
@@ -949,6 +1033,14 @@ function renderQuickPresets(){
       <span class="quick-preset-del" onclick="deleteQuickPreset('${safeId}',event)">✕</span>
     </button>`;
   }).join('');
+  const shortcutsToggle=document.getElementById('shortcutsToggle');
+  const shortcutsWrap=document.getElementById('quickGrid-shortcuts');
+  if(shortcutsWrap){
+    shortcutsWrap.style.display=shortcutsCollapsed?'none':'grid';
+  }
+  if(shortcutsToggle){
+    shortcutsToggle.textContent=shortcutsCollapsed?'▸':'▾';
+  }
 }
 
 function openQuickPresetModal(){
@@ -1016,6 +1108,203 @@ function deleteEntry(id){
   if(!confirm('Delete this log entry?'))return;
   appData.logs=appData.logs.filter(e=>String(e.id)!==String(id));
   saveData();renderDashboard();renderLogs();updateSwitcherUI();
+}
+
+function toggleQuickGrid(){
+  quickGridCollapsed=!quickGridCollapsed;
+  const quickGridWrap=document.getElementById('quickGridSection');
+  const quickGridToggle=document.getElementById('quickGridToggle');
+  if(quickGridWrap){
+    quickGridWrap.style.display=quickGridCollapsed?'none':'block';
+  }
+  if(quickGridToggle){
+    quickGridToggle.textContent=quickGridCollapsed?'▸':'▾';
+  }
+}
+
+function toggleShortcuts(){
+  shortcutsCollapsed=!shortcutsCollapsed;
+  const shortcutsWrap=document.getElementById('quickGrid-shortcuts');
+  const shortcutsToggle=document.getElementById('shortcutsToggle');
+  if(shortcutsWrap){
+    shortcutsWrap.style.display=shortcutsCollapsed?'none':'grid';
+  }
+  if(shortcutsToggle){
+    shortcutsToggle.textContent=shortcutsCollapsed?'▸':'▾';
+  }
+}
+
+function renderStats(){
+  const baby=getBaby(activeBaby);
+  const logs=getWeekLogs(activeBaby);
+  const wrap=document.getElementById('statsWrapper');
+  const titleEl=document.getElementById('statsTitle');
+  if(titleEl)titleEl.textContent=`Stats — Last 7 days (${baby.name})`;
+  if(!wrap)return;
+  if(!logs.length){
+    wrap.innerHTML=`<div class="stats-summary">No logs for the last 7 days for ${baby.name}. Start logging activities to see weekly stats here.</div>`;
+    return;
+  }
+  // helpers for ranges
+  const today=new Date(); today.setHours(0,0,0,0);
+  const thisStart=new Date(today); thisStart.setDate(thisStart.getDate()-6);
+  const prevEnd=new Date(thisStart.getTime()-1);
+  const prevStart=new Date(prevEnd); prevStart.setDate(prevStart.getDate()-6);
+  const prevLogs=getLogsFor(activeBaby).filter(l=>l.timestamp>=prevStart.getTime() && l.timestamp<=prevEnd.getTime());
+
+  // aggregate current week
+  let sleepMin=0,sleepDayMin=0,sleepNightMin=0;
+  let feedCount=0,feedMl=0;
+  let diaperCount=0,wet=0,soiled=0,both=0;
+  let feedMorning=0,feedAfternoon=0,feedEvening=0;
+  const dayBuckets={}; // key: dayTs -> {sleepMin,feedCount,diaperCount}
+
+  function bucketFor(ts){
+    const d=new Date(ts);
+    const key=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    if(!dayBuckets[key])dayBuckets[key]={sleepMin:0,feedCount:0,diaperCount:0};
+    return dayBuckets[key];
+  }
+
+  logs.forEach(e=>{
+    const dStr=e.detail||'';
+    const h=new Date(e.timestamp).getHours();
+    const bucket=bucketFor(e.timestamp);
+    if(e.type==='sleep'){
+      if(dStr.startsWith('Ongoing'))return;
+      const mMatch=/^(\d+)\s*min/i.exec(dStr);
+      if(mMatch){
+        const mins=parseInt(mMatch[1],10)||0;
+        sleepMin+=mins;
+        bucket.sleepMin+=mins;
+        if(h>=7 && h<19)sleepDayMin+=mins; else sleepNightMin+=mins;
+      }
+    }else if(e.type==='feeding'){
+      feedCount++; bucket.feedCount++;
+      const mlMatch=/(\d+)\s*ml/i.exec(dStr);
+      if(mlMatch){feedMl+=parseInt(mlMatch[1],10)||0;}
+      if(h<12)feedMorning++; else if(h<18)feedAfternoon++; else feedEvening++;
+    }else if(e.type==='diaper'){
+      diaperCount++; bucket.diaperCount++;
+      if(dStr.startsWith('Wet'))wet++;
+      else if(dStr.startsWith('Soiled'))soiled++;
+      else if(dStr.startsWith('Both'))both++;
+    }
+  });
+
+  // aggregate previous week (for comparison)
+  let prevSleepMin=0,prevFeedCount=0,prevDiaperCount=0;
+  prevLogs.forEach(e=>{
+    const dStr=e.detail||'';
+    if(e.type==='sleep'){
+      if(dStr.startsWith('Ongoing'))return;
+      const mMatch=/^(\d+)\s*min/i.exec(dStr);
+      if(mMatch){prevSleepMin+=parseInt(mMatch[1],10)||0;}
+    }else if(e.type==='feeding'){
+      prevFeedCount++;
+    }else if(e.type==='diaper'){
+      prevDiaperCount++;
+    }
+  });
+
+  // per-day stats & streaks
+  const daysWindow=7;
+  const sleepHours=(sleepMin/60).toFixed(1);
+  const avgSleepPerDay=((sleepMin/60)/daysWindow).toFixed(1);
+  const avgFeedsPerDay=(feedCount/daysWindow).toFixed(1);
+  const avgDiapersPerDay=(diaperCount/daysWindow).toFixed(1);
+
+  let bestDayKey=null,worstDayKey=null,bestSleepMin=0,worstSleepMin=null;
+  let daysWithAnyFeed=0,daysWith3Feeds=0,daysWith10hSleep=0;
+  for(let i=0;i<daysWindow;i++){
+    const d=new Date(thisStart); d.setDate(thisStart.getDate()+i);
+    const key=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+    const b=dayBuckets[key]||{sleepMin:0,feedCount:0,diaperCount:0};
+    const s=b.sleepMin||0;
+    if(bestDayKey===null || s>bestSleepMin){bestDayKey=key;bestSleepMin=s;}
+    if(worstDayKey===null || s<(worstSleepMin??s)){worstDayKey=key;worstSleepMin=s;}
+    if(b.feedCount>0)daysWithAnyFeed++;
+    if(b.feedCount>=3)daysWith3Feeds++;
+    if(s>=600)daysWith10hSleep++;
+  }
+
+  function fmtDayLabel(key){
+    const d=new Date(Number(key));
+    return d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});
+  }
+
+  const bestDayLabel=bestDayKey!==null && bestSleepMin>0 ? `${fmtDayLabel(bestDayKey)} · ${(bestSleepMin/60).toFixed(1)}h` : 'No sleep logged';
+  const worstDayLabel=worstDayKey!==null && (worstSleepMin??0)>0 ? `${fmtDayLabel(worstDayKey)} · ${(worstSleepMin/60).toFixed(1)}h` : 'No sleep logged';
+
+  // comparisons vs previous week
+  const deltaSleepH=((sleepMin-prevSleepMin)/60).toFixed(1);
+  const deltaFeeds=feedCount-prevFeedCount;
+  const deltaDiapers=diaperCount-prevDiaperCount;
+
+  function fmtDelta(v,suffix){
+    if(!isFinite(v)||v===0)return 'same as previous 7 days';
+    const sign=v>0?'+':'';
+    return `${sign}${v}${suffix} vs previous 7 days`;
+  }
+
+  const sleepDeltaLabel=fmtDelta(Number(deltaSleepH),'h');
+  const feedDeltaLabel=fmtDelta(deltaFeeds,'');
+  const diaperDeltaLabel=fmtDelta(deltaDiapers,'');
+
+  const sleepDayHours=(sleepDayMin/60).toFixed(1);
+  const sleepNightHours=(sleepNightMin/60).toFixed(1);
+
+  wrap.innerHTML=`
+    <div class="stats-summary">
+      Showing activity for the last 7 days for <strong>${baby.name}</strong>.
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Sleep time</div>
+        <div class="stat-value">${sleepHours}h</div>
+        <div class="stat-sub">${sleepMin} min of logged sleep<br>${sleepDeltaLabel}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Feedings</div>
+        <div class="stat-value">${feedCount}</div>
+        <div class="stat-sub">${feedMl ? feedMl+' ml total (where entered)' : 'No ml amounts entered'}<br>${feedDeltaLabel}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Diapers</div>
+        <div class="stat-value">${diaperCount}</div>
+        <div class="stat-sub">Wet ${wet} · Soiled ${soiled} · Both ${both}<br>${diaperDeltaLabel}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">All logs</div>
+        <div class="stat-value">${logs.length}</div>
+        <div class="stat-sub">Across all activity types</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Daily averages</div>
+        <div class="stat-value">${avgSleepPerDay}h</div>
+        <div class="stat-sub">${avgFeedsPerDay} feeds · ${avgDiapersPerDay} diapers / day</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Best & worst sleep</div>
+        <div class="stat-sub"><strong>Best:</strong> ${bestDayLabel}</div>
+        <div class="stat-sub"><strong>Lowest:</strong> ${worstDayLabel}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sleep by time of day</div>
+        <div class="stat-value">${sleepDayHours}h</div>
+        <div class="stat-sub">Day (7am–7pm) · Night: ${sleepNightHours}h</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Feeding pattern</div>
+        <div class="stat-sub">Morning: ${feedMorning} · Afternoon: ${feedAfternoon} · Evening: ${feedEvening}</div>
+        <div class="stat-sub">Days with feeds: ${daysWithAnyFeed} / 7 · Days with ≥3 feeds: ${daysWith3Feeds}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sleep streaks</div>
+        <div class="stat-sub">Days with ≥10h sleep: ${daysWith10hSleep} / 7</div>
+      </div>
+    </div>
+  `;
 }
 
 function stopSleep(id){
