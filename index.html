@@ -8,7 +8,9 @@
 <meta name="apple-mobile-web-app-title" content="Baby Tracker">
 <meta name="theme-color" content="#fce4ec">
 <link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+<!-- Use one shared icon for favicon and PWA (icons live in root) -->
+<link rel="apple-touch-icon" href="/icon-192x192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png">
 <title>Baby Tracker 🍼</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -57,6 +59,22 @@
     overflow-x: hidden;
     padding-top: var(--safe-top);
     padding-bottom: calc(var(--safe-bottom) + 82px);
+  }
+
+  /* Constrain main app width like an iPhone */
+  .app-frame {
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* Baby 2 theme overrides (use Baby 2 teal/blue palette) */
+  body.theme-b2 {
+    --bg:        var(--baby2-bg);
+    --pink:       var(--baby2);
+    --pink-light: var(--baby2-bg);
+    --pink-mid:   var(--teal-mid);
+    --border2:    var(--teal-mid);
   }
 
   /* Subtle background blobs */
@@ -160,26 +178,62 @@
 
   /* ── QUICK GRID ── */
   .quick-grid {
-    display: grid; grid-template-columns: repeat(3,1fr);
-    gap: 10px; padding: 0 14px;
+    display: grid; grid-template-columns: repeat(6,1fr);
+    gap: 6px; padding: 0 10px;
   }
 
   .activity-btn {
     background: var(--surface);
     border: 1.5px solid var(--border2);
-    border-radius: 18px; padding: 14px 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    border-radius: 14px; padding: 10px 4px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
     cursor: pointer; transition: transform .15s, box-shadow .15s;
     box-shadow: 0 2px 8px rgba(244,143,177,0.10);
   }
   .activity-btn:active { transform: scale(.93); box-shadow: none; }
-  .activity-btn .icon { font-size: 27px; line-height: 1; }
-  .activity-btn .label { font-size: 11px; font-weight: 700; color: var(--text); text-align: center; }
+  .activity-btn .icon { font-size: 22px; line-height: 1; }
+  .activity-btn .label { font-size: 10px; font-weight: 700; color: var(--text); text-align: center; }
   .activity-btn .last-time {
     font-size: 9px; color: var(--text2); font-weight: 600;
     background: var(--pink-light);
     border-radius: 8px; padding: 2px 7px; text-align: center;
   }
+
+  .quick-grid-shortcuts {
+    margin-top: 6px;
+  }
+  .quick-shortcuts-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px 6px;
+  }
+  .quick-shortcuts-title {
+    font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--text2); font-weight: 700;
+  }
+  .quick-shortcuts-add {
+    padding: 6px 10px; border-radius: 12px;
+    border: 1.5px solid var(--border2); background: var(--surface);
+    font-size: 11px; font-weight: 700; color: var(--text2);
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+  }
+  .quick-shortcuts-add:active { background: var(--pink-light); }
+
+  .quick-preset-detail {
+    font-size: 9px; color: var(--text2); font-weight: 600;
+    text-align: center;
+  }
+  .activity-btn.quick-preset {
+    position: relative;
+    padding: 12px 6px;
+    gap: 4px;
+  }
+  .quick-preset-del {
+    position: absolute; top: 6px; right: 6px;
+    font-size: 11px; color: var(--text3);
+    cursor: pointer; padding: 2px 4px; border-radius: 8px;
+  }
+  .quick-preset-del:active { color: var(--pink); background: var(--pink-light); }
 
   /* ── WIDGETS ── */
   .widgets-grid { display: flex; flex-direction: column; gap: 9px; padding: 0 14px; }
@@ -195,9 +249,9 @@
   }
   @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
+  /* Removed left accent strip on widgets for cleaner cards */
   .widget::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-    background: var(--widget-color, var(--pink)); border-radius: 2px 0 0 2px;
+    content: none;
   }
 
   .widget-icon {
@@ -211,8 +265,8 @@
   .widget-ago { font-family: 'Baloo 2', cursive; font-size: 13px; font-weight: 700; color: var(--widget-color, var(--pink)); white-space: nowrap; flex-shrink: 0; }
   .widget-delete { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--text3); padding: 4px; border-radius: 8px; }
   .widget-delete:active { color: var(--pink); }
-  .widget-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--pink-light); }
-  .widget-progress-fill { height: 100%; background: var(--widget-color, var(--pink)); border-radius: 2px; opacity: 0.5; }
+  .widget-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--surface); }
+  .widget-progress-fill { height: 100%; background: var(--surface); border-radius: 2px; opacity: 0; }
 
   .timer-urgent { color: #e53935 !important; }
   .timer-warn   { color: #fb8c00 !important; }
@@ -322,7 +376,8 @@
 
   /* ── BOTTOM NAV ── */
   .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); z-index: 100;
+    width: 100%; max-width: 480px;
     background: rgba(255,245,248,0.95);
     backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
     border-top: 1.5px solid var(--pink-mid);
@@ -411,9 +466,11 @@
 </head>
 <body>
 
+<div class="app-frame">
+
 <div class="header">
   <div class="header-center">
-    <div class="header-title">🍼 Baby Tracker</div>
+    <div class="header-title">Baby Tracker</div>
     <div class="header-date" id="headerDate"></div>
   </div>
   <div class="baby-switcher">
@@ -424,7 +481,6 @@
         <div class="baby-tab-count" id="tab-count-1">0 today</div>
       </div>
       <div class="baby-tab-dot b1-dot"></div>
-      <!-- <button class="baby-tab-edit" onclick="openEditName(1,event)">✏️</button> -->
     </div>
     <div class="baby-tab" id="tab-baby2" onclick="switchBaby(2)">
       <div class="baby-tab-avatar b2-avatar">🩵</div>
@@ -433,7 +489,6 @@
         <div class="baby-tab-count" id="tab-count-2">0 today</div>
       </div>
       <div class="baby-tab-dot b2-dot"></div>
-      <!-- <button class="baby-tab-edit" onclick="openEditName(2,event)">✏️</button> -->
     </div>
   </div>
 </div>
@@ -471,6 +526,11 @@
       <div class="last-time" id="last-custom">—</div>
     </button>
   </div>
+  <div class="quick-shortcuts-header">
+    <div class="quick-shortcuts-title">My Shortcuts</div>
+    <button class="quick-shortcuts-add" onclick="openQuickPresetModal()">＋ Add</button>
+  </div>
+  <div class="quick-grid quick-grid-shortcuts" id="quickGrid-shortcuts"></div>
   <div class="section-label" id="recentLabel">Recent Activity</div>
   <div class="widgets-grid" id="widgetsGrid"></div>
 </div>
@@ -535,9 +595,16 @@
         <span class="settings-row-value">⚠️</span>
       </div>
     </div>
+    <div class="settings-card">
+      <div class="settings-row" onclick="refreshApp()">
+        <span class="settings-row-label">Check for updates & refresh app</span>
+        <span class="settings-row-value">🔁</span>
+      </div>
+    </div>
   </div>
   <div style="text-align:center;padding:22px 20px 10px;font-size:12px;color:var(--text2);font-weight:500;line-height:1.7;">
     All data stored on your device only.<br>No servers · No accounts · Completely free 🩷
+  </div>
   </div>
 </div>
 
@@ -677,10 +744,50 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- QUICK PRESET MODAL -->
+<div class="modal-overlay" id="modal-quickpreset" onclick="closeModalIfOverlay(event,'modal-quickpreset')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚡ My Shortcut</div>
+    <label>Activity Type</label>
+    <div class="opt-row">
+      <button class="opt-btn sel-teal selected" data-group="qp-type" data-val="feeding" onclick="selectOpt(this,'qp-type')">🍼 Feeding</button>
+      <button class="opt-btn sel-teal" data-group="qp-type" data-val="diaper" onclick="selectOpt(this,'qp-type')">🚼 Diaper</button>
+      <button class="opt-btn sel-teal" data-group="qp-type" data-val="sleep" onclick="selectOpt(this,'qp-type')">😴 Sleep</button>
+      <button class="opt-btn sel-teal" data-group="qp-type" data-val="bath" onclick="selectOpt(this,'qp-type')">🛁 Bath</button>
+      <button class="opt-btn sel-teal" data-group="qp-type" data-val="medicine" onclick="selectOpt(this,'qp-type')">💊 Medicine</button>
+      <button class="opt-btn sel-teal" data-group="qp-type" data-val="custom" onclick="selectOpt(this,'qp-type')">✏️ Custom</button>
+    </div>
+    <label>Button Label</label>
+    <input type="text" id="qp-label" placeholder="e.g. Formula 120ml" maxlength="30">
+    <label>Details saved on tap</label>
+    <input type="text" id="qp-detail" placeholder="e.g. Formula · 120ml" maxlength="60">
+    <button class="btn-primary" onclick="saveQuickPreset()">Save Shortcut ✓</button>
+    <button class="btn-secondary" onclick="closeModal('modal-quickpreset')">Cancel</button>
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'babyTracker_v3';
-function loadData(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||mkDefault();}catch{return mkDefault();}}
-function mkDefault(){return{babies:[{id:1,name:'Baby 1',dob:''},{id:2,name:'Baby 2',dob:''}],logs:[]};}
+function loadData(){
+  try{
+    const raw=JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if(!raw)return mkDefault();
+    if(!Array.isArray(raw.babies))raw.babies=[{id:1,name:'Baby 1',dob:''},{id:2,name:'Baby 2',dob:''}];
+    if(!Array.isArray(raw.logs))raw.logs=[];
+    if(!Array.isArray(raw.quickPresets))raw.quickPresets=[];
+    return raw;
+  }catch{
+    return mkDefault();
+  }
+}
+function mkDefault(){
+  return{
+    babies:[{id:1,name:'Baby 1',dob:''},{id:2,name:'Baby 2',dob:''}],
+    logs:[],
+    quickPresets:[]
+  };
+}
 function saveData(){localStorage.setItem(STORAGE_KEY,JSON.stringify(appData));}
 
 let appData=loadData();
@@ -699,6 +806,7 @@ const ACT={
 
 function getBaby(id){return appData.babies.find(b=>b.id===id);}
 function getLogsFor(id){return appData.logs.filter(l=>l.babyId===id);}
+function getQuickPresets(){return appData.quickPresets||[];}
 
 function formatAgo(ts){
   const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(d/3600000),dy=Math.floor(d/86400000);
@@ -715,7 +823,21 @@ function nowLocalISO(){const n=new Date();return new Date(n-n.getTimezoneOffset(
 function agoClass(ms){const h=ms/3600000;if(h>=3)return'timer-urgent';if(h>=2)return'timer-warn';return'';}
 function todayCount(id){const t=new Date();t.setHours(0,0,0,0);return getLogsFor(id).filter(l=>l.timestamp>=t.getTime()).length;}
 
-function switchBaby(id){activeBaby=id;activeFilter='all';updateSwitcherUI();renderDashboard();renderLogs();}
+function switchBaby(id){
+  activeBaby=id;
+  activeFilter='all';
+  updateThemeForActiveBaby();
+  updateSwitcherUI();
+  renderDashboard();
+  renderLogs();
+}
+
+function updateThemeForActiveBaby(){
+  const b=document.body;
+  if(!b)return;
+  if(activeBaby===2)b.classList.add('theme-b2');
+  else b.classList.remove('theme-b2');
+}
 
 function updateSwitcherUI(){
   [1,2].forEach(id=>{
@@ -747,6 +869,7 @@ function renderDashboard(){
     const el=document.getElementById('last-'+type);
     if(el)el.textContent=last?formatAgo(last.timestamp):(type==='custom'?'—':'Never');
   });
+  renderQuickPresets();
   const grid=document.getElementById('widgetsGrid');
   const recent=getLogsFor(activeBaby).slice(0,8);
   if(!recent.length){
@@ -757,6 +880,7 @@ function renderDashboard(){
     const cfg=ACT[entry.type]||ACT.custom;
     const diff=Date.now()-entry.timestamp;
     const pct=Math.min(100,(diff/(4*3600000))*100);
+    const isOngoingSleep = entry.type==='sleep' && (entry.detail||'').startsWith('Ongoing');
     return`<div class="widget" style="--widget-color:${cfg.color}">
       <div class="widget-icon">${cfg.icon}</div>
       <div class="widget-info">
@@ -764,7 +888,10 @@ function renderDashboard(){
         <div class="widget-detail">${entry.detail||'—'}</div>
       </div>
       <div class="widget-ago ${agoClass(diff)}">${formatAgo(entry.timestamp)}</div>
-      <button class="widget-delete" onclick="deleteEntry('${entry.id}')">✕</button>
+      ${isOngoingSleep
+        ? `<button class="widget-delete" onclick="stopSleep('${entry.id}')">⏹</button>`
+        : `<button class="widget-delete" onclick="deleteEntry('${entry.id}')">✕</button>`
+      }
       <div class="widget-progress"><div class="widget-progress-fill" style="width:${pct}%"></div></div>
     </div>`;
   }).join('');
@@ -790,20 +917,127 @@ function renderLogs(){
   logs.forEach(e=>{const k=formatDate(e.timestamp);if(!groups[k])groups[k]=[];groups[k].push(e);});
   list.innerHTML=Object.entries(groups).map(([date,entries])=>`
     <div><div class="log-date-label">${date}</div>
-    ${entries.map(e=>{const cfg=ACT[e.type]||ACT.custom;return`<div class="log-item">
+    ${entries.map(e=>{const cfg=ACT[e.type]||ACT.custom;const isOngoingSleep=e.type==='sleep'&&(e.detail||'').startsWith('Ongoing');return`<div class="log-item">
       <div class="log-item-icon">${cfg.icon}</div>
       <div class="log-item-info">
         <div class="log-item-type">${cfg.label}</div>
         ${e.detail?`<div class="log-item-note">${e.detail}</div>`:''}
       </div>
       <div class="log-item-time">${formatTime(e.timestamp)}</div>
-      <button class="log-item-del" onclick="deleteEntry('${e.id}')">🗑️</button>
+      ${isOngoingSleep
+        ? `<button class="log-item-del" onclick="stopSleep('${e.id}')">⏹</button>`
+        : `<button class="log-item-del" onclick="deleteEntry('${e.id}')">🗑️</button>`
+      }
     </div>`;}).join('')}</div>`).join('');
 }
 
+function renderQuickPresets(){
+  const wrap=document.getElementById('quickGrid-shortcuts');
+  if(!wrap)return;
+  const presets=getQuickPresets();
+  if(!presets.length){
+    wrap.innerHTML='';
+    return;
+  }
+  wrap.innerHTML=presets.map(p=>{
+    const cfg=ACT[p.type]||ACT.custom;
+    const safeId=String(p.id);
+    return`<button class="activity-btn quick-preset" onclick="runQuickPreset('${safeId}')">
+      <div class="icon">${cfg.icon}</div>
+      <div class="label">${p.label||cfg.label}</div>
+      <div class="quick-preset-detail">${p.detail||''}</div>
+      <span class="quick-preset-del" onclick="deleteQuickPreset('${safeId}',event)">✕</span>
+    </button>`;
+  }).join('');
+}
+
+function openQuickPresetModal(){
+  // reset fields
+  document.getElementById('qp-label').value='';
+  document.getElementById('qp-detail').value='';
+  const modal=document.getElementById('modal-quickpreset');
+  // default select feeding
+  modal.querySelectorAll('[data-group="qp-type"]').forEach(o=>o.classList.remove('selected'));
+  const def=modal.querySelector('[data-group="qp-type"][data-val="feeding"]');
+  if(def)def.classList.add('selected');
+  modal.classList.add('open');
+}
+
+function saveQuickPreset(){
+  const modal=document.getElementById('modal-quickpreset');
+  const typeBtn=modal.querySelector('[data-group="qp-type"].selected');
+  const type=typeBtn?typeBtn.dataset.val:'feeding';
+  const cfg=ACT[type]||ACT.custom;
+  const labelVal=document.getElementById('qp-label').value.trim()||cfg.label;
+  const detailVal=document.getElementById('qp-detail').value.trim();
+  if(!detailVal){
+    showToast('Please add details for the shortcut');
+    return;
+  }
+  const preset={id:Date.now()+Math.random(),type,label:labelVal,detail:detailVal};
+  if(!Array.isArray(appData.quickPresets))appData.quickPresets=[];
+  appData.quickPresets.unshift(preset);
+  saveData();
+  closeModal('modal-quickpreset');
+  renderQuickPresets();
+  showToast('⚡ Shortcut saved');
+}
+
+function runQuickPreset(id){
+  const preset=getQuickPresets().find(p=>String(p.id)===String(id));
+  if(!preset)return;
+  const type=preset.type;
+  let detail=preset.detail||'';
+  if(type==='sleep'){
+    // Treat sleep shortcuts as "ongoing" so they can be stopped later
+    detail='Ongoing'+(detail?` · ${detail}`:'');
+  }
+  const timestamp=Date.now();
+  appData.logs.unshift({id:Date.now()+Math.random(),babyId:activeBaby,type,detail,timestamp});
+  saveData();
+  renderDashboard();
+  renderLogs();
+  updateSwitcherUI();
+  const cfg=ACT[type]||ACT.custom;
+  showToast(`${cfg.icon} ${cfg.label} logged for ${getBaby(activeBaby).name}!`);
+}
+
+function deleteQuickPreset(id,event){
+  if(event)event.stopPropagation();
+  if(!Array.isArray(appData.quickPresets))return;
+  if(!confirm('Remove this shortcut?'))return;
+  appData.quickPresets=appData.quickPresets.filter(p=>String(p.id)!==String(id));
+  saveData();
+  renderQuickPresets();
+  showToast('✕ Shortcut removed');
+}
+
 function deleteEntry(id){
+  if(!confirm('Delete this log entry?'))return;
   appData.logs=appData.logs.filter(e=>String(e.id)!==String(id));
   saveData();renderDashboard();renderLogs();updateSwitcherUI();
+}
+
+function stopSleep(id){
+  const entry=appData.logs.find(e=>String(e.id)===String(id));
+  if(!entry||entry.type!=='sleep')return;
+  const startTs=entry.timestamp;
+  const now=Date.now();
+  const dur=Math.max(1,Math.round((now-startTs)/60000));
+  const detailStr=entry.detail||'';
+  let notePart='';
+  if(detailStr.startsWith('Ongoing')){
+    const idx=detailStr.indexOf('·');
+    if(idx!==-1){
+      notePart=' · '+detailStr.slice(idx+1).trim();
+    }
+  }
+  entry.detail=dur+'min'+notePart;
+  saveData();
+  renderDashboard();
+  renderLogs();
+  updateSwitcherUI();
+  showToast('😴 Sleep stopped for '+getBaby(entry.babyId).name+'!');
 }
 
 function openModal(type){
@@ -939,6 +1173,21 @@ function clearAllData(){
   showToast('🗑️ All data cleared');
 }
 
+function refreshApp(){
+  showToast('Checking for updates…');
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistration().then(reg=>{
+      if(reg){
+        reg.update().finally(()=>{window.location.reload();});
+      }else{
+        window.location.reload();
+      }
+    }).catch(()=>window.location.reload());
+  }else{
+    window.location.reload();
+  }
+}
+
 let toastTimer;
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
@@ -950,7 +1199,8 @@ if('serviceWorker' in navigator){
 }
 
 window.addEventListener('DOMContentLoaded',()=>{
-  updateSwitcherUI();renderDashboard();renderSettings();
+  updateThemeForActiveBaby();
+  updateSwitcherUI();renderDashboard();renderSettings();renderQuickPresets();
   setInterval(()=>{renderDashboard();updateSwitcherUI();},60000);
   const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   if(isIOS&&!window.navigator.standalone)document.getElementById('installBanner').classList.add('visible');
